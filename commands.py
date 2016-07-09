@@ -1,0 +1,5 @@
+commands = [
+    'temp',
+    'status',
+]
+
