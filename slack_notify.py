@@ -5,57 +5,60 @@ import argparse
 import sys
 import ConfigParser
 
-config = ConfigParser.ConfigParser()
-config.read('bot.config')
+class SlackNotify:
+    slack_client = ''
 
-slack_client = ''
+    epoch = datetime.utcfromtimestamp(0)
 
-epoch = datetime.utcfromtimestamp(0)
+    priority_colours = {
+        'normal': 'good',
+        'high': 'danger'
+    }
 
-priority_colours = {
-    'normal': 'good',
-    'high': 'danger'
-}
+    def __init__(self, token):
+        self.slack_client = SlackClient(token)
 
-def generate_attachment(title, priority, text, ts):
-    attachments = [{'title':title,
-                    'color':priority_colours[priority],
-                    'text':text,
-                    'fallback':text,
-                    'ts':(datetime.utcnow()-epoch).total_seconds()  if ts is None else ts
-                    }]
-    return json.dumps(attachments)
 
-def generate_table_attachment(title, priority, data, fallback):
-    fields = []
-    attachments = []
+    def generate_attachment(self, title, priority, text, ts):
+        attachments = [{'title': title,
+                        'color': self.priority_colours[priority],
+                        'text': text,
+                        'fallback': text,
+                        'ts': (datetime.utcnow() - self.epoch).total_seconds() if ts is None else ts
+                        }]
+        return json.dumps(attachments)
 
-    for d in data:
-        field = [{'title':'Sensor', 'value': str(d['Name']), 'short': 'true'},
-                {'title':'Value', 'value': str(d['Data']), 'short': 'true'},
-                {'title':'Last Update', 'value': str(d['LastUpdate']), 'short': 'true'},
-                 ]
-        attachment = {'title':title,
-                    'color':priority_colours[priority],
-                    'fallback':fallback,
-                    'fields': field
-                    }
-        attachments.append(attachment)
+    def generate_table_attachment(self, title, priority, data, fallback):
+        fields = []
+        attachments = []
 
-    return json.dumps(attachments)
+        for d in data:
+            field = [{'title': 'Sensor', 'value': str(d['Name']), 'short': 'true'},
+                     {'title': 'Value', 'value': str(d['Data']), 'short': 'true'},
+                     {'title': 'Last Update', 'value': str(d['LastUpdate']), 'short': 'true'},
+                     ]
+            attachment = {'title': title,
+                          'color': self.priority_colours[priority],
+                          'fallback': fallback,
+                          'fields': field
+                          }
+            attachments.append(attachment)
 
-def post_slack_message(channel, attachment):
-    slack_client.api_call("chat.postMessage", channel=channel,
-                          as_user=True,
-                          attachments=attachment,
-                          )
+        return json.dumps(attachments)
 
-def datetime_to_ts(dt):
-    if isinstance(dt,datetime):
-        return (dt - epoch).total_seconds()
-    raise Exception('dt must be of type datetime')
+    def post_slack_message(self, channel, attachment):
+        self.slack_client.api_call('chat.postMessage', channel=channel,
+                              as_user=True,
+                              attachments=attachment,
+                              )
 
-if __name__ == "__main__":
+    def datetime_to_ts(self, dt):
+        if isinstance(dt, datetime):
+            return (dt - self.epoch).total_seconds()
+        raise Exception('dt must be of type datetime')
+
+
+if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--priority', default='high')
     parser.add_argument('--message')
@@ -63,14 +66,20 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    priority=args.priority
-    channel=args.channel
-    message=args.message
+    priority = args.priority
+    channel = args.channel
+    message = args.message
 
-    slack_client = SlackClient(config.get('slack','token'))
+    config = ConfigParser.ConfigParser()
+    config.read('bot.config')
+
+    slack_client = SlackClient(config.get('slack', 'token'))
 
     if message is None:
         print('No message specified')
         sys.exit(1)
 
-    post_slack_message(channel,generate_attachment('Sensor Triggered', priority, message))
+    slack_notify = SlackNotify(config.get('slack', 'token'))
+    ts = slack_notify.datetime_to_ts(datetime.utcnow())
+    attachment = slack_notify.generate_attachment('Sensor Triggered', priority, message, ts)
+    slack_notify.post_slack_message(channel, attachment)
