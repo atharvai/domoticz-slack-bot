@@ -29,3 +29,6 @@ url = mydomoticz
 All interactions with the bot must be after adding the bot to a channel. To interact send messages by mentioning the bot `@Domoticz: `
 
 ![demo](demo.png "sample")
+
+## Bot ID
+There is a handy script called [print_bot_id](print_bot_id.py) that will print the ID of your Slack bot. To use it, make sure you add token to it.

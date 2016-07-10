@@ -3,4 +3,4 @@ bot_id = XXXXXXXX
 token = xoxb-123456789-Ex4Mp13
 
 [domoticz]
-url = mydomoticz
+host = mydomoticz

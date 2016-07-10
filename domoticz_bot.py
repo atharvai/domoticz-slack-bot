@@ -5,7 +5,7 @@ from datetime import datetime
 import ConfigParser
 from domoticz import domoticz
 from slack_notify import SlackNotify
-from commands import commands
+from commands import commands, command_groups
 
 config = ConfigParser.ConfigParser()
 config.read('bot.config')
@@ -14,7 +14,6 @@ BOT_ID = config.get('slack', 'bot_id')
 
 # constants
 AT_BOT = "<@" + BOT_ID + ">:"
-EXAMPLE_COMMAND = "do"
 
 # instantiate Slack & Twilio clients
 slack_client = SlackClient(config.get('slack', 'token'))
@@ -30,24 +29,52 @@ def handle_command(command, channel):
         :param channel:
         :param command:
     """
-    response = 'Not sure what you mean. Use the *' + EXAMPLE_COMMAND + \
-               '* command with numbers, delimited by spaces.'
-    if command in commands:
-        if command.startswith(EXAMPLE_COMMAND):
-            response = "Sure...write some more code then I can do that!"
-            slack_notify.post_slack_message(channel, response)
-        elif command.startswith('temp'):
-            get_domoticz_temp(channel)
-        elif command == 'status':
-            data = domo.get_device_status_many('temp')
-            get_domoticz_status(channel, data)
+    response = 'Not sure what you mean. Sample commands to try `status all`, `status temp`, `temp`'
+    command_grp, cmd = parse_command(command)
+    if command_grp in command_groups:
+        if cmd == '' and (len(commands[command_grp]) == 0 or 'all' in commands[command_grp]):
+            cmd = 'all'
+
+        if command_grp == 'status':
+            if cmd in commands[command_grp]:
+                data = domo.get_device_status_many(cmd)
+                get_domoticz_status(channel, data)
+        elif command_grp == 'device':
+            if cmd in commands[command_grp]:
+                data = sorted(domo.device_id_map.keys())
+                attachment = slack_notify.generate_attachment('Device List','neutral', '\n'.join(data), slack_notify.datetime_to_ts(datetime.utcnow()))
+                slack_notify.post_slack_message(channel, attachment)
+        elif command_grp == 'temp':
+            get_domoticz_temp(channel, cmd)
+    else:
+        slack_notify.post_slack_message_plain(channel, '')
 
 
-def get_domoticz_temp(channel):
-    data = domo.get_device_data(idx=5)
-    ts = slack_notify.datetime_to_ts(datetime.strptime(data['LastUpdate'], '%Y-%m-%d %H:%M:%S'))
-    attachment = slack_notify.generate_attachment(data['Name'], 'normal', data['Data'], ts)
-    slack_notify.post_slack_message(channel, attachment)
+def parse_command(slack_output):
+    parsed = slack_output.split(' ',1)
+    try:
+        parsed[1] = int(parsed[1])
+    finally:
+        if len(parsed) == 1:
+            parsed = parsed + ['']
+        return parsed
+
+def get_domoticz_temp(channel, name):
+    if name == '' or name == 'all':
+        data = domo.get_device_status_many('temp')
+        get_domoticz_status(channel, data)
+    else:
+        devices = filter(lambda k: name.lower() in k['Name'].lower(), domo.device_list_by_type['Temp'])
+        if len(devices) == 0:
+            slack_notify.post_slack_message_plain(channel, 'Device _{dev}_ not found'.format(dev=name))
+            return
+
+        idx = devices[0]['idx']
+        data = domo.get_device_data(idx=idx)
+        data = data[0]
+        ts = slack_notify.datetime_to_ts(datetime.strptime(data['LastUpdate'], '%Y-%m-%d %H:%M:%S'))
+        attachment = slack_notify.generate_attachment(data['Name'], 'normal', data['Data'], ts)
+        slack_notify.post_slack_message(channel, attachment)
 
 
 def get_domoticz_status(channel, data):
@@ -75,7 +102,7 @@ def parse_slack_output(slack_rtm_output):
 if __name__ == '__main__':
     READ_WEBSOCKET_DELAY = 1  # 1 second delay between reading from firehose
     if slack_client.rtm_connect():
-        print('StarterBot connected and running!')
+        print('DomoticzBot connected and running!')
         while True:
             command, channel = parse_slack_output(slack_client.rtm_read())
             if command and channel:

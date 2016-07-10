@@ -5,19 +5,20 @@ import argparse
 import sys
 import ConfigParser
 
+
 class SlackNotify:
     slack_client = ''
 
     epoch = datetime.utcfromtimestamp(0)
 
     priority_colours = {
+        'neutral': '#3366ff',
         'normal': 'good',
         'high': 'danger'
     }
 
     def __init__(self, token):
         self.slack_client = SlackClient(token)
-
 
     def generate_attachment(self, title, priority, text, ts):
         attachments = [{'title': title,
@@ -48,9 +49,15 @@ class SlackNotify:
 
     def post_slack_message(self, channel, attachment):
         self.slack_client.api_call('chat.postMessage', channel=channel,
-                              as_user=True,
-                              attachments=attachment,
-                              )
+                                   as_user=True,
+                                   attachments=attachment,
+                                   )
+
+    def post_slack_message_plain(self, channel, text):
+        self.slack_client.api_call('chat.postMessage', channel=channel,
+                                   as_user=True,
+                                   text=text,
+                                   )
 
     def datetime_to_ts(self, dt):
         if isinstance(dt, datetime):
