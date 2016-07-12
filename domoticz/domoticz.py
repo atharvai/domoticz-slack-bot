@@ -26,7 +26,7 @@ class Domoticz:
 
     @property
     def device_list(self):
-        if (self.devices_last_update - datetime.utcnow()).seconds >= 300:
+        if (datetime.utcnow() - self.devices_last_update).seconds >= 300:
             self._cache_device_list()
         return self._device_list
 
@@ -40,7 +40,7 @@ class Domoticz:
         self._device_list = req.json()['result']
         self.devices_last_update = datetime.strptime(req.json()['ServerTime'],'%Y-%m-%d %H:%M:%S')
 
-        grouped = groupby(self.device_list, lambda d: d['Type'])
+        grouped = groupby(self._device_list, lambda d: d['Type'])
         new_list = {}
         for k, v in grouped:
             if k in new_list:
