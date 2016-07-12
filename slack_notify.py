@@ -11,10 +11,12 @@ class SlackNotify:
 
     epoch = datetime.utcfromtimestamp(0)
 
-    priority_colours = {
+    colours = {
         'neutral': '#3366ff',
         'normal': 'good',
-        'high': 'danger'
+        'high': 'danger',
+        'red': 'danger',
+        'green': 'good'
     }
 
     def __init__(self, token):
@@ -22,7 +24,7 @@ class SlackNotify:
 
     def generate_attachment(self, title, priority, text, ts):
         attachments = [{'title': title,
-                        'color': self.priority_colours[priority],
+                        'color': self.colours[priority],
                         'text': text,
                         'fallback': text,
                         'ts': (datetime.utcnow() - self.epoch).total_seconds() if ts is None else ts
@@ -39,7 +41,7 @@ class SlackNotify:
                      {'title': 'Last Update', 'value': str(d['LastUpdate']), 'short': 'true'},
                      ]
             attachment = {'title': title,
-                          'color': self.priority_colours[priority],
+                          'color': self.colours[priority],
                           'fallback': fallback,
                           'fields': field
                           }
