@@ -21,6 +21,7 @@ This returns cards for each device matching the keyword. These commands mirror t
 | light| `status light` |  Return status of devices of type light (Light and Switches) that are used |
 | weather | `status weather` |  Return status of devices of type Weather that are used |
 | utility | `status utility` |  Return status of devices of type Utility that are used |
+| \<device name\> | `status thermostat` |  Return status reported by first matching device. Name is partially matched and is case insensitive |
 
 # Devices
 
@@ -28,24 +29,20 @@ These commands report back the status or data reported by a device. The command 
 
 ## Command Group: `device`
 
-These commands usually report metadata about devices rather than any readings.
-
 #### Commands
 
 | Command | Example | Description |
 |---------|---------|-------------|
 | list | `device list` | Returns a list of all used devices in alphabetical order |
 
+# Sunrise & Sunset
 
-## Command Group: `temp`
+This consists of one command only which returns the Sunrise and Sunset times in UTC. This maps directly to Domoticz's [SunRiseSet API](https://www.domoticz.com/wiki/Domoticz_API/JSON_URL%27s#Get_sunrise_and_sunset_times)
 
-Specifically for temperature devices
+## Command Group: `sunriseset`
 
 #### Commands
 
 | Command | Example | Description |
 |---------|---------|-------------|
-| all | `temp all` | Return Temperature reported by all devices |
-| <blank> | `temp` | Same as `all` Return Temperature reported by all devices |
-| \<device name\> | `temp thermostat` |  Return temperature reported by first matching device. Name is matched anywhere and is case insensitive |
-
+| sunriseset | `sunriseset` | Returns the Sunrise and Sunset times in 24hr and UTC |

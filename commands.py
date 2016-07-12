@@ -1,13 +1,10 @@
 command_groups = [
     'status',
-    'temp',
     'device',
+    'sunriseset'
 ]
 
 commands = {
-    'temp': [
-        'all'
-    ],
     'status': [
         'all',
         'temp',
@@ -17,5 +14,6 @@ commands = {
     ],
     'device': [
         'list'
-    ]
+    ],
+    'sunriseset': []
 }

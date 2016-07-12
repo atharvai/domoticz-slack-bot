@@ -1,5 +1,5 @@
 import requests
-from endpoints import devices
+from endpoints import devices, command
 from datetime import datetime, timedelta
 from itertools import groupby
 
@@ -73,3 +73,8 @@ class Domoticz:
         if device_type is not None:
             req = requests.get(self.base_url, devices[device_type])
             return req.json()['result']
+
+
+    def get_sunriseset(self):
+        req = requests.get(self.base_url, command['sunriseset'])
+        return req.json()

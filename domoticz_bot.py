@@ -7,6 +7,9 @@ from domoticz import domoticz
 from slack_notify import SlackNotify
 from commands import commands, command_groups
 
+INTRO_MSG = 'How can I help?'
+HELP_MSG = 'I didn''t quite understand that.' + '\n' + INTRO_MSG
+
 config = ConfigParser.ConfigParser()
 config.read('bot.config')
 
@@ -39,15 +42,23 @@ def handle_command(command, channel):
             if cmd in commands[command_grp]:
                 data = domo.get_device_status_many(cmd)
                 get_domoticz_status(channel, data)
+            else:
+                get_device_status(channel, cmd)
         elif command_grp == 'device':
             if cmd in commands[command_grp]:
                 data = sorted(domo.device_id_map.keys())
                 attachment = slack_notify.generate_attachment('Device List','neutral', '\n'.join(data), slack_notify.datetime_to_ts(datetime.utcnow()))
                 slack_notify.post_slack_message(channel, attachment)
-        elif command_grp == 'temp':
-            get_domoticz_temp(channel, cmd)
+        elif command_grp == 'sunriseset':
+            data = domo.get_sunriseset()
+            data.pop('title')
+            data.pop('status')
+            attachment = slack_notify.generate_attachment_custom_fields('SunRise & SunSet', 'neutral', data, 'SunRiseSet')
+            slack_notify.post_slack_message(channel, attachment)
+        else:
+            slack_notify.post_slack_message_plain(channel, HELP_MSG)
     else:
-        slack_notify.post_slack_message_plain(channel, '')
+        slack_notify.post_slack_message_plain(channel, HELP_MSG)
 
 
 def parse_command(slack_output):
@@ -59,26 +70,22 @@ def parse_command(slack_output):
             parsed = parsed + ['']
         return parsed
 
-def get_domoticz_temp(channel, name):
-    if name == '' or name == 'all':
-        data = domo.get_device_status_many('temp')
-        get_domoticz_status(channel, data)
-    else:
-        devices = filter(lambda k: name.lower() in k['Name'].lower(), domo.device_list_by_type['Temp'])
-        if len(devices) == 0:
-            slack_notify.post_slack_message_plain(channel, 'Device _{dev}_ not found'.format(dev=name))
-            return
+def get_device_status(channel, name):
+    devices = filter(lambda k: name.lower() in k['Name'].lower(), domo.device_list)
+    if len(devices) == 0:
+        slack_notify.post_slack_message_plain(channel, 'Device _{dev}_ not found'.format(dev=name))
+        return
 
-        idx = devices[0]['idx']
-        data = domo.get_device_data(idx=idx)
-        data = data[0]
-        ts = slack_notify.datetime_to_ts(datetime.strptime(data['LastUpdate'], '%Y-%m-%d %H:%M:%S'))
-        attachment = slack_notify.generate_attachment(data['Name'], 'normal', data['Data'], ts)
-        slack_notify.post_slack_message(channel, attachment)
+    idx = devices[0]['idx']
+    data = domo.get_device_data(idx=idx)
+    data = data[0]
+    ts = slack_notify.datetime_to_ts(datetime.strptime(data['LastUpdate'], '%Y-%m-%d %H:%M:%S'))
+    attachment = slack_notify.generate_attachment(data['Name'], 'neutral', data['Data'], ts)
+    slack_notify.post_slack_message(channel, attachment)
 
 
 def get_domoticz_status(channel, data):
-    attachments = slack_notify.generate_table_attachment('Device Status', 'normal', data, 'Device Status Update')
+    attachments = slack_notify.generate_table_attachment('Device Status', 'neutral', data, 'Device Status Update')
     slack_notify.post_slack_message(channel, attachments)
 
 
@@ -107,6 +114,8 @@ if __name__ == '__main__':
             command, channel = parse_slack_output(slack_client.rtm_read())
             if command and channel:
                 handle_command(command, channel)
+            else:
+                slack_notify.post_slack_message_plain(channel, INTRO_MSG)
             time.sleep(READ_WEBSOCKET_DELAY)
     else:
         print('Connection failed. Invalid Slack token or bot ID?')

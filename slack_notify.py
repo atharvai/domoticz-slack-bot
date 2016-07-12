@@ -49,6 +49,26 @@ class SlackNotify:
 
         return json.dumps(attachments)
 
+    def generate_attachment_custom_fields(self, title, priority, data, fallback):
+        fields = []
+        attachments = []
+
+        for ftitle, value in data.iteritems():
+            if ftitle == 'ServerTime':
+                continue
+            field = {'title': str(ftitle), 'value': str(value), 'short': 'true'}
+            fields.append(field)
+        attachment = {'title': title,
+                      'color': self.colours[priority],
+                      'fallback': fallback,
+                      'fields': fields,
+                      }
+        if 'ServerTime' in data:
+            attachment['ts'] = self.datetime_to_ts(datetime.strptime(data['ServerTime'], '%Y-%m-%d %H:%M:%S'))
+        attachments.append(attachment)
+
+        return json.dumps(attachments)
+
     def post_slack_message(self, channel, attachment):
         self.slack_client.api_call('chat.postMessage', channel=channel,
                                    as_user=True,
