@@ -46,13 +46,17 @@ def handle_command(command, channel):
                 get_device_status(channel, cmd)
         elif command_grp == 'device':
             if cmd in commands[command_grp]:
-                data = sorted(domo.device_id_map.keys())
+                data = sorted(map(lambda d: d['Name'], domo.device_list))
                 attachment = slack_notify.generate_attachment('Device List','neutral', '\n'.join(data), slack_notify.datetime_to_ts(datetime.utcnow()))
                 slack_notify.post_slack_message(channel, attachment)
+            else:
+                slack_notify.post_slack_message_plain(channel, HELP_MSG)
         elif command_grp == 'sunriseset':
             data = domo.get_sunriseset()
-            data.pop('title')
-            data.pop('status')
+            if 'title' in data:
+                data.pop('title')
+            if 'status' in data:
+                data.pop('status')
             attachment = slack_notify.generate_attachment_custom_fields('SunRise & SunSet', 'neutral', data, 'SunRiseSet')
             slack_notify.post_slack_message(channel, attachment)
         else:
