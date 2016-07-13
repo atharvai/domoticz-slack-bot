@@ -22,7 +22,7 @@ AT_BOT = "<@" + BOT_ID + ">:"
 slack_client = SlackClient(config.get('slack', 'token'))
 slack_notify = SlackNotify(config.get('slack', 'token'))
 domo = domoticz.Domoticz(config.get('domoticz', 'host'))
-
+domo._cache_device_list()
 
 def handle_command(command, channel):
     """

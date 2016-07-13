@@ -22,11 +22,11 @@ class Domoticz:
     def __init__(self, host, port = 8080):
         self.host = host
         self.port = port
-        self._cache_device_list()
+        #self._cache_device_list()
 
     @property
     def device_list(self):
-        if (datetime.utcnow() - self.devices_last_update).seconds >= 300:
+        if self._device_list == [] or ((datetime.utcnow() - self.devices_last_update).seconds >= 300):
             self._cache_device_list()
         return self._device_list
 
