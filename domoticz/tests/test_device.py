@@ -4,7 +4,7 @@ import requests_mock
 from domoticz import domoticz
 
 @requests_mock.Mocker()
-class TestDomoticz(unittest.TestCase):
+class TestDevice(unittest.TestCase):
     device_data = {'result':[{'Type': 'Light', 'idx': '1', 'Name': 'Device1'},
                                {'Type': 'Light', 'idx': '2', 'Name': 'Device2'},
                                ],

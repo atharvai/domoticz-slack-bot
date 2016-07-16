@@ -18,7 +18,7 @@ BOT_ID = config.get('slack', 'bot_id')
 # constants
 AT_BOT = "<@" + BOT_ID + ">:"
 
-# instantiate Slack & Twilio clients
+# instantiate Slack clients
 slack_client = SlackClient(config.get('slack', 'token'))
 slack_notify = SlackNotify(config.get('slack', 'token'))
 domo = domoticz.Domoticz(config.get('domoticz', 'host'))
@@ -59,6 +59,60 @@ def handle_command(command, channel):
                 data.pop('status')
             attachment = slack_notify.generate_attachment_custom_fields('SunRise & SunSet', 'neutral', data, 'SunRiseSet')
             slack_notify.post_slack_message(channel, attachment)
+        elif command_grp == 'uservar':
+            req_var = None
+            if ' ' in cmd:
+                req_var = cmd.split(' ', 1)
+                cmd = req_var[0]
+            if cmd in commands[command_grp]:
+                if cmd == 'all':
+                    data = map(lambda v: v['Name'],domo.get_all_variables())
+                    attachment = slack_notify.generate_attachment('User Variable List', 'neutral', '\n'.join(data), slack_notify.datetime_to_ts(datetime.utcnow()))
+                    slack_notify.post_slack_message(channel, attachment)
+                elif cmd == 'get':
+                    is_idx = False
+                    data = None
+                    try:
+                        v = int(req_var[1])
+                        is_idx = True
+                    except:
+                        is_idx = False
+                    if is_idx:
+                        data = domo.get_user_variable(idx=req_var[1])
+                    else:
+                        data = domo.get_user_variable(name=req_var[1])
+
+                    attachment = slack_notify.generate_attachment('User Variable: {id}'.format(id=req_var[1]), 'neutral', data, slack_notify.datetime_to_ts(datetime.utcnow()))
+                    slack_notify.post_slack_message(channel, attachment)
+                elif cmd == 'set':
+                    vtype, name, value = req_var[1].split(' ')
+                    var_type = domo.get_user_variable_type_id(vtype)
+                    if var_type is not None:
+                        status = domo.create_or_update_user_variable(name, value, var_type)
+                        if status['title'] == 'UpdateUserVariable' and status['status'] == 'OK':
+                            status = 'User variable update successful'
+                        elif status['title'] == 'CreatUserVariable' and status['status'] == 'OK':
+                            status = 'User variable created successful'
+                        else:
+                            status = status['status']
+                    else:
+                        status = 'Variable type {} not recognised. Valid types are: int, integer, float, str, string, date, time'.format(vtype)
+                    slack_notify.post_slack_message_plain(channel, status)
+                elif cmd == 'delete':
+                    var = req_var[1]
+                    is_idx = False
+                    try:
+                        idx = int(var)
+                        is_idx = True
+                    except:
+                        is_idx = False
+                    if is_idx:
+                        status = domo.delete_user_variable(idx=var)
+                    else:
+                        status = domo.delete_user_variable(name=var)
+                    slack_notify.post_slack_message_plain(channel, status)
+            else:
+                slack_notify.post_slack_message_plain(channel, HELP_MSG)
         else:
             slack_notify.post_slack_message_plain(channel, HELP_MSG)
     else:
