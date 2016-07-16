@@ -46,3 +46,17 @@ This consists of one command only which returns the Sunrise and Sunset times in 
 | Command | Example | Description |
 |---------|---------|-------------|
 | sunriseset | `sunriseset` | Returns the Sunrise and Sunset times in 24hr and UTC |
+
+# User Variables
+
+This consists of three commands to set, get and delete user variables. 
+
+## Commad Group: `uservar`
+
+#### Commands
+
+| Command | Example | Description |
+|---------|---------|-------------|
+| get (all\|\<idx\>\|\<name\>) | `uservar get all`, `uservar get 1`, `uservar get myvar` | Returns either list of all user variables or value of requested variable. Can request using IDX or variable name (case insensitive) |
+| set \<type\> \<name\> \<value\> | `uservar set int var_int 1` | Creates or updates variable called `name` with `value` as `type`. `type` can be one of the following:<ul><li>int / integer</li><li>float</li><li>str / string</li><li>date</li><li>time</li> </ul> Strings can only be single word values |
+| delete (\<idx\>\|\<name\>) | `uservar delete 1`, `uservar delete var_int` | Deletes user variable by name or IDX |
