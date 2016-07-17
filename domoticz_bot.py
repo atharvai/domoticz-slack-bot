@@ -1,11 +1,12 @@
-import json
-import time
-from slackclient import SlackClient
-from datetime import datetime
 import ConfigParser
+import time
+
+from commands import cmd_uservar, cmd_device, cmd_status
+from commands.commands import commands, command_groups
 from domoticz import domoticz
-from slack_notify import SlackNotify
-from commands import commands, command_groups
+from slack.slack_helper import generate_attachment_custom_fields
+from slack.slack_notify import SlackNotify
+from slackclient import SlackClient
 
 INTRO_MSG = 'How can I help?'
 HELP_MSG = 'I didn''t quite understand that.' + '\n' + INTRO_MSG
@@ -24,6 +25,7 @@ slack_notify = SlackNotify(config.get('slack', 'token'))
 domo = domoticz.Domoticz(config.get('domoticz', 'host'))
 domo._cache_device_list()
 
+
 def handle_command(command, channel):
     """
         Receives commands directed at the bot and determines if they
@@ -39,25 +41,22 @@ def handle_command(command, channel):
             cmd = 'all'
 
         if command_grp == 'status':
-            if cmd in commands[command_grp]:
-                data = domo.get_device_status_many(cmd)
-                get_domoticz_status(channel, data)
-            else:
-                get_device_status(channel, cmd)
+            msg = cmd_status.process(domo, cmd, command_grp)
+            slack_notify.post_slack_message(channel, msg)
         elif command_grp == 'device':
             if cmd in commands[command_grp]:
-                data = sorted(map(lambda d: d['Name'], domo.device_list))
-                attachment = slack_notify.generate_attachment('Device List','neutral', '\n'.join(data), slack_notify.datetime_to_ts(datetime.utcnow()))
-                slack_notify.post_slack_message(channel, attachment)
+                msg = cmd_device.process(domo, cmd)
+                if msg is not None:
+                    slack_notify.post_slack_message(channel, msg)
             else:
-                slack_notify.post_slack_message_plain(channel, HELP_MSG)
+                post_help_msg(channel)
         elif command_grp == 'sunriseset':
             data = domo.get_sunriseset()
             if 'title' in data:
                 data.pop('title')
             if 'status' in data:
                 data.pop('status')
-            attachment = slack_notify.generate_attachment_custom_fields('SunRise & SunSet', 'neutral', data, 'SunRiseSet')
+            attachment = generate_attachment_custom_fields('SunRise & SunSet', 'neutral', data, 'SunRiseSet')
             slack_notify.post_slack_message(channel, attachment)
         elif command_grp == 'uservar':
             req_var = None
@@ -65,86 +64,31 @@ def handle_command(command, channel):
                 req_var = cmd.split(' ', 1)
                 cmd = req_var[0]
             if cmd in commands[command_grp]:
-                if cmd == 'all':
-                    data = map(lambda v: v['Name'],domo.get_all_variables())
-                    attachment = slack_notify.generate_attachment('User Variable List', 'neutral', '\n'.join(data), slack_notify.datetime_to_ts(datetime.utcnow()))
-                    slack_notify.post_slack_message(channel, attachment)
-                elif cmd == 'get':
-                    is_idx = False
-                    data = None
-                    try:
-                        v = int(req_var[1])
-                        is_idx = True
-                    except:
-                        is_idx = False
-                    if is_idx:
-                        data = domo.get_user_variable(idx=req_var[1])
-                    else:
-                        data = domo.get_user_variable(name=req_var[1])
-
-                    attachment = slack_notify.generate_attachment('User Variable: {id}'.format(id=req_var[1]), 'neutral', data, slack_notify.datetime_to_ts(datetime.utcnow()))
-                    slack_notify.post_slack_message(channel, attachment)
-                elif cmd == 'set':
-                    vtype, name, value = req_var[1].split(' ')
-                    var_type = domo.get_user_variable_type_id(vtype)
-                    if var_type is not None:
-                        status = domo.create_or_update_user_variable(name, value, var_type)
-                        if status['title'] == 'UpdateUserVariable' and status['status'] == 'OK':
-                            status = 'User variable update successful'
-                        elif status['title'] == 'CreatUserVariable' and status['status'] == 'OK':
-                            status = 'User variable created successful'
-                        else:
-                            status = status['status']
-                    else:
-                        status = 'Variable type {} not recognised. Valid types are: int, integer, float, str, string, date, time'.format(vtype)
-                    slack_notify.post_slack_message_plain(channel, status)
-                elif cmd == 'delete':
-                    var = req_var[1]
-                    is_idx = False
-                    try:
-                        idx = int(var)
-                        is_idx = True
-                    except:
-                        is_idx = False
-                    if is_idx:
-                        status = domo.delete_user_variable(idx=var)
-                    else:
-                        status = domo.delete_user_variable(name=var)
-                    slack_notify.post_slack_message_plain(channel, status)
+                msg = cmd_uservar.process(domo, cmd, req_var)
+                if msg.startswith('[{'):
+                    slack_notify.post_slack_message(channel, msg)
+                else:
+                    slack_notify.post_slack_message_plain(channel, msg)
             else:
-                slack_notify.post_slack_message_plain(channel, HELP_MSG)
+                post_help_msg(channel)
         else:
-            slack_notify.post_slack_message_plain(channel, HELP_MSG)
+            post_help_msg(channel)
     else:
-        slack_notify.post_slack_message_plain(channel, HELP_MSG)
+        post_help_msg(channel)
+
+
+def post_help_msg(channel):
+    slack_notify.post_slack_message_plain(channel, HELP_MSG)
 
 
 def parse_command(slack_output):
-    parsed = slack_output.split(' ',1)
+    parsed = slack_output.split(' ', 1)
     try:
         parsed[1] = int(parsed[1])
     finally:
         if len(parsed) == 1:
             parsed = parsed + ['']
         return parsed
-
-def get_device_status(channel, name):
-    devices = filter(lambda k: name.lower() in k['Name'].lower(), domo.device_list)
-    if len(devices) == 0:
-        slack_notify.post_slack_message_plain(channel, 'Device _{dev}_ not found'.format(dev=name))
-        return
-
-    idx = devices[0]['idx']
-    data = domo.get_device_data(idx=idx)
-    data = data[0]
-    ts = slack_notify.datetime_to_ts(datetime.strptime(data['LastUpdate'], '%Y-%m-%d %H:%M:%S'))
-    attachment = slack_notify.generate_attachment(data['Name'], 'neutral', data['Data'], ts)
-    slack_notify.post_slack_message(channel, attachment)
-
-
-def get_domoticz_status(channel, data):
-    attachments = slack_notify.generate_table_attachment('Device Status', 'neutral', data, 'Device Status Update')
-    slack_notify.post_slack_message(channel, attachments)
 
 
 def parse_slack_output(slack_rtm_output):

@@ -14,7 +14,9 @@ commands = {
         'light'
     ],
     'device': [
-        'list'
+        'list',
+        'toggle',
+        'dim'
     ],
     'sunriseset': [],
     'uservar': [

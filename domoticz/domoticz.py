@@ -1,8 +1,10 @@
+import time
+from datetime import datetime
+from itertools import groupby
+
 import requests
 from endpoints import devices, command, uservariables, uservariable_type
-from datetime import datetime, timedelta, date
-from itertools import groupby
-import time
+
 
 class Domoticz:
     host = ''
@@ -118,11 +120,14 @@ class Domoticz:
             var_idx = idx
         if name is not None and var_idx is None:
             var_idx = self.get_variable_idx_by_name(name)
-
+            if var_idx is None:
+                return 'Variable `{}` not found'.format(name)
         if var_idx > 0:
             params = uservariables['byIdx'].copy()
             params['idx'] = var_idx
             req = requests.get(self.base_url, params)
+            if 'result' not in req.json():
+                return 'Variable `{}` not found'.format(var_idx)
             var_value = req.json()['result'][0]['Value']
             var_type = req.json()['result'][0]['Type']
 
