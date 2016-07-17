@@ -36,7 +36,7 @@ These commands report back the status or data reported by a device. The command 
 | list | `device list` | Returns a list of all used devices in alphabetical order |
 | \<name\> (on\|off) | `device light1 on`, `device switch2 off` | Turn light/switch device On/Off. for dimmable lights/switched see `dim` command. Setting values for other types of devices is not yet implemented |
 | dim \<name\> <level> | `device dim light2 4`, `device dim light3 100` | Set dim level for light/switch. Level should be between `1` and `16` |
-| toggle \<name\> | `device toggle switch3` | Toggles on/off a light/switch |
+| toggle \<name\> | `device toggle switch3` | Toggles on/off a light/switch. Not yet functional |
 
 # Sunrise & Sunset
 

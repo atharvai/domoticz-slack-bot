@@ -6,6 +6,7 @@ devices = {
     'weather': {'type':'devices','filter':'weather','used':'true','order':'Name'},
     'favourite': {'type':'devices','filter':'all','used':'true','order':'Name','favorite':1},
     'byIdx': {'type':'devices','rid':-1},
+    'toggleLightSwitch': {'type':'command','param':'switchlight','switchcmd':'Toggle','idx':-1},
 }
 
 command = {

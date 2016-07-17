@@ -44,12 +44,12 @@ def handle_command(command, channel):
             msg = cmd_status.process(domo, cmd, command_grp)
             slack_notify.post_slack_message(channel, msg)
         elif command_grp == 'device':
-            if cmd in commands[command_grp]:
-                msg = cmd_device.process(domo, cmd)
-                if msg is not None:
-                    slack_notify.post_slack_message(channel, msg)
-            else:
-                post_help_msg(channel)
+            #if cmd.split(' ', 1)[0] in commands[command_grp]:
+            msg = cmd_device.process(domo, cmd)
+            if msg is not None:
+                slack_notify.post_slack_message(channel, msg)
+            # else:
+            #     post_help_msg(channel)
         elif command_grp == 'sunriseset':
             data = domo.get_sunriseset()
             if 'title' in data:

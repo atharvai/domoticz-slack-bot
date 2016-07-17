@@ -35,7 +35,7 @@ class Domoticz:
 
     @property
     def device_id_map(self):
-        return dict(map(lambda d: (d['Name'], d['idx']), self._device_list))
+        return dict(map(lambda d: (d['Name'].lower(), d['idx']), self._device_list))
 
     def _cache_device_list(self):
         # TODO: make this a live API call every time or use job queue system
@@ -179,5 +179,18 @@ class Domoticz:
 
         params = uservariables['delete'].copy()
         params['idx'] = str(var_idx)
+        req = requests.get(self.base_url, params)
+        return req.json()['status']
+
+    def toggle_light_switch(self, name=None, idx=None, swt_cmd='Toggle'):
+        var_idx = None
+        if idx is not None:
+            var_idx = idx
+        if name is not None and var_idx is None:
+            var_idx = self.device_id_map[name]
+
+        params = devices['toggleLightSwitch'].copy()
+        params['idx'] = str(var_idx)
+        params['switchcmd'] = swt_cmd
         req = requests.get(self.base_url, params)
         return req.json()['status']

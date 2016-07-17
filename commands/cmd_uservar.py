@@ -13,7 +13,7 @@ def process(domo, cmd, req_var):
         is_idx = False
         data = None
         try:
-            v = int(req_var[1])
+            int(req_var[1])
             is_idx = True
         except:
             is_idx = False
