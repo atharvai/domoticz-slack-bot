@@ -35,8 +35,8 @@ These commands report back the status or data reported by a device. The command 
 |---------|---------|-------------|
 | list | `device list` | Returns a list of all used devices in alphabetical order |
 | \<name\> (on\|off) | `device light1 on`, `device switch2 off` | Turn light/switch device On/Off. for dimmable lights/switched see `dim` command. Setting values for other types of devices is not yet implemented |
-| dim \<name\> <level> | `device dim light2 4`, `device dim light3 100` | Set dim level for light/switch. Level should be between `1` and `16` |
-| toggle \<name\> | `device toggle switch3` | Toggles on/off a light/switch. Not yet functional |
+| dim \<name\> <level> | `device dim light2 4`, `device dim light3 100` | Set dim level for light/switch. Level should be between `1` and `16`. Not yet functional|
+| toggle \<name\> | `device toggle switch3` | Toggles on/off a light/switch. |
 | status \<name\> | `device status switch3` | Returns status of device. Same as the [Status command group](#cgStatus) | 
 
 Device names containing spaces must be enclosed in single or double quotes. E.g. `'virtual switch'` or `"virtual switch"`.
