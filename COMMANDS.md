@@ -6,7 +6,7 @@ The commands are split in two parts, a command group and command itself. The int
 The command group defines the type of information to pull such as `status`, `temp` etc. The command is either a command keyword or a device name. 
 This will be illustrated for each command group and command below.
 
-# Status
+# <a name='cgStatus'></a>Status
 
 This returns cards for each device matching the keyword. These commands mirror the Domoticz [Get All Devices of type](https://www.domoticz.com/wiki/Domoticz_API/JSON_URL%27s#Get_all_devices_of_a_certain_type) API.
 
@@ -37,6 +37,9 @@ These commands report back the status or data reported by a device. The command 
 | \<name\> (on\|off) | `device light1 on`, `device switch2 off` | Turn light/switch device On/Off. for dimmable lights/switched see `dim` command. Setting values for other types of devices is not yet implemented |
 | dim \<name\> <level> | `device dim light2 4`, `device dim light3 100` | Set dim level for light/switch. Level should be between `1` and `16` |
 | toggle \<name\> | `device toggle switch3` | Toggles on/off a light/switch. Not yet functional |
+| status \<name\> | `device status switch3` | Returns status of device. Same as the [Status command group](#cgStatus) | 
+
+Device names containing spaces must be enclosed in single or double quotes. E.g. `'virtual switch'` or `"virtual switch"`.
 
 # Sunrise & Sunset
 

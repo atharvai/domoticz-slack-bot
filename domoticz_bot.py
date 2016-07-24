@@ -41,15 +41,19 @@ def handle_command(command, channel):
             cmd = 'all'
 
         if command_grp == 'status':
-            msg = cmd_status.process(domo, cmd, command_grp)
-            slack_notify.post_slack_message(channel, msg)
+            msg_type, msg = cmd_status.process(domo, cmd, command_grp)
+            if msg_type == 'attachment':
+                slack_notify.post_slack_message(channel, msg)
+            elif msg_type == 'plain':
+                slack_notify.post_slack_message_plain(channel, msg)
         elif command_grp == 'device':
             #if cmd.split(' ', 1)[0] in commands[command_grp]:
-            msg = cmd_device.process(domo, cmd)
+            msg_type, msg = cmd_device.process(domo, cmd)
             if msg is not None:
-                slack_notify.post_slack_message(channel, msg)
-            # else:
-            #     post_help_msg(channel)
+                if msg_type == 'attachment':
+                    slack_notify.post_slack_message(channel, msg)
+                elif msg_type == 'plain':
+                    slack_notify.post_slack_message_plain(channel, msg)
         elif command_grp == 'sunriseset':
             data = domo.get_sunriseset()
             if 'title' in data:
@@ -64,10 +68,10 @@ def handle_command(command, channel):
                 req_var = cmd.split(' ', 1)
                 cmd = req_var[0]
             if cmd in commands[command_grp]:
-                msg = cmd_uservar.process(domo, cmd, req_var)
-                if msg.startswith('[{'):
+                msg_type, msg = cmd_uservar.process(domo, cmd, req_var)
+                if msg_type == 'attachment':
                     slack_notify.post_slack_message(channel, msg)
-                else:
+                elif msg_type == 'plain':
                     slack_notify.post_slack_message_plain(channel, msg)
             else:
                 post_help_msg(channel)
@@ -108,8 +112,8 @@ def parse_slack_output(slack_rtm_output):
     return None, None
 
 
-if __name__ == '__main__':
-    READ_WEBSOCKET_DELAY = 1  # 1 second delay between reading from firehose
+def slack_connect():
+    READ_WEBSOCKET_DELAY = 0.5  # 1 second delay between reading from firehose
     if slack_client.rtm_connect():
         print('DomoticzBot connected and running!')
         while True:
@@ -121,3 +125,15 @@ if __name__ == '__main__':
             time.sleep(READ_WEBSOCKET_DELAY)
     else:
         print('Connection failed. Invalid Slack token or bot ID?')
+
+if __name__ == '__main__':
+    retry_limit = 5
+    retry_attempt = 0
+    while(retry_attempt < retry_limit):
+        try:
+            slack_connect()
+        except Exception as ex:
+            print('Connection terminated. retrying...')
+            print(ex.message)
+            time.sleep(retry_attempt * 5)
+            retry_attempt += 1

@@ -4,11 +4,12 @@ from slack.slack_helper import generate_attachment, datetime_to_ts
 
 
 def process(domo, cmd, req_var):
+    msg_type = 'attachment'
     if cmd == 'all':
         data = map(lambda v: v['Name'], domo.get_all_variables())
         attachment = generate_attachment('User Variable List', 'neutral', '\n'.join(data),
                                          datetime_to_ts(datetime.utcnow()))
-        return attachment
+        return msg_type, attachment
     elif cmd == 'get':
         is_idx = False
         data = None
@@ -21,10 +22,13 @@ def process(domo, cmd, req_var):
             data = domo.get_user_variable(idx=req_var[1])
         else:
             data = domo.get_user_variable(name=req_var[1])
-
-        attachment = generate_attachment('User Variable: {id}'.format(id=req_var[1]), 'neutral', data,
+        if data is not None:
+            attachment = generate_attachment('User Variable: {id}'.format(id=req_var[1]), 'neutral', data,
                                          datetime_to_ts(datetime.utcnow()))
-        return attachment
+        else:
+            msg_type = 'plain'
+            attachment = 'Variable `{}` not found'.format(req_var[1])
+        return msg_type, attachment
     elif cmd == 'set':
         vtype, name, value = req_var[1].split(' ')
         var_type = domo.get_user_variable_type_id(vtype)
@@ -39,7 +43,8 @@ def process(domo, cmd, req_var):
         else:
             status = 'Variable type {} not recognised. Valid types are: int, integer, float, str, string, date, time'.format(
                     vtype)
-        return status
+        msg_type = 'plain'
+        return msg_type, status
     elif cmd == 'delete':
         var = req_var[1]
         is_idx = False
@@ -52,4 +57,8 @@ def process(domo, cmd, req_var):
             status = domo.delete_user_variable(idx=var)
         else:
             status = domo.delete_user_variable(name=var)
-        return status
+
+        msg_type = 'plain'
+        if status is None:
+            status = 'Variable `{}` not found'.format(var)
+        return msg_type, status

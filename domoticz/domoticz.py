@@ -55,7 +55,7 @@ class Domoticz:
     def get_device_data(self, idx=None, name=None):
         selected_dev = self.select_device(idx, name)
         if selected_dev is None or len(selected_dev) == 0:
-            return
+            return None
         return selected_dev
 
     def select_device(self, idx=None, name=None, count=1):
@@ -75,7 +75,10 @@ class Domoticz:
     def get_device_status_many(self, device_type):
         if device_type is not None:
             req = requests.get(self.base_url, devices[device_type])
-            return req.json()['result']
+            if 'result' in req.json():
+                return req.json()['result']
+            else:
+                return None
 
     def get_sunriseset(self):
         req = requests.get(self.base_url, command['sunriseset'])
@@ -121,13 +124,13 @@ class Domoticz:
         if name is not None and var_idx is None:
             var_idx = self.get_variable_idx_by_name(name)
             if var_idx is None:
-                return 'Variable `{}` not found'.format(name)
+                return None
         if var_idx > 0:
             params = uservariables['byIdx'].copy()
             params['idx'] = var_idx
             req = requests.get(self.base_url, params)
             if 'result' not in req.json():
-                return 'Variable `{}` not found'.format(var_idx)
+                return None
             var_value = req.json()['result'][0]['Value']
             var_type = req.json()['result'][0]['Type']
 
@@ -176,6 +179,8 @@ class Domoticz:
             var_idx = idx
         if name is not None and var_idx is None:
             var_idx = self.get_variable_idx_by_name(name)
+            if var_idx is None:
+                return None
 
         params = uservariables['delete'].copy()
         params['idx'] = str(var_idx)
@@ -187,7 +192,12 @@ class Domoticz:
         if idx is not None:
             var_idx = idx
         if name is not None and var_idx is None:
-            var_idx = self.device_id_map[name]
+            try:
+                var_idx = self.device_id_map[name]
+            except KeyError as kex:
+                print('Device {} not found'.format(name))
+                var_idx = None
+                return None
 
         params = devices['toggleLightSwitch'].copy()
         params['idx'] = str(var_idx)

@@ -3,6 +3,7 @@ from datetime import datetime
 from commands import commands
 from slack.slack_helper import generate_table_attachment, generate_attachment, datetime_to_ts
 
+NOT_FOUND_MSG = 'Device `{}` not found'
 
 def get_domoticz_status(data):
     attachments = generate_table_attachment('Device Status', 'neutral', data, 'Device Status Update')
@@ -12,7 +13,7 @@ def get_domoticz_status(data):
 def get_device_status(domo, name):
     devices = filter(lambda k: name.lower() in k['Name'].lower(), domo.device_list)
     if len(devices) == 0:
-        return
+        return None
 
     idx = devices[0]['idx']
     data = domo.get_device_data(idx=idx)
@@ -23,8 +24,14 @@ def get_device_status(domo, name):
 
 
 def process(domo, cmd, command_grp):
+    result = None
     if cmd in commands[command_grp]:
         data = domo.get_device_status_many(cmd)
-        return get_domoticz_status(data)
+        if data is not None:
+            result = get_domoticz_status(data)
     else:
-        return get_device_status(domo, cmd)
+        result = get_device_status(domo, cmd)
+
+    if result is None:
+        return 'plain', NOT_FOUND_MSG.format(cmd)
+    return 'attachment', result
