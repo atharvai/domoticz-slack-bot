@@ -19,12 +19,15 @@ The bot requires a configuration file that holds Bot ID & token and also Domotic
     `./run.sh`
   b. Supervisor
     1. Create virtualenv
+    
     ```bash
     virtualenv venv
     source venv/bin/activate
     pip install -r requirements.txt
     ```
+    
     2. Setup Supervisor config
+    
     ```
     [program:domoticz_slack_bot]
     command=/home/pi/Documents/domoticz-slack-bot/venv/bin/python domoticz_bot.py
@@ -36,6 +39,7 @@ The bot requires a configuration file that holds Bot ID & token and also Domotic
     stdout_logfile_backups=2
     numprocs=1
     ```
+    
     3. Start Supervisor
       `sudo supervisord`
 
