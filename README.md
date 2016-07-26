@@ -15,9 +15,12 @@ The bot requires a configuration file that holds Bot ID & token and also Domotic
 2. Change directory
 `cd domoticz-slack-bot`
 3. Execute: Shell script OR Supervisor
+  
   a. shell script
     `./run.sh`
+  
   b. Supervisor
+  
     1. Create virtualenv
     
     ```bash
