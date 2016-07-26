@@ -1,4 +1,4 @@
-# domoticz-slack-bot
+# domoticz-slack-bot [![Build Status](https://travis-ci.org/atharvai/domoticz-slack-bot.svg?branch=master)](https://travis-ci.org/atharvai/domoticz-slack-bot)
 Slack bot for interacting with Domoticz
 
 ## Overview
