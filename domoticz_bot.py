@@ -47,7 +47,6 @@ def handle_command(command, channel):
             elif msg_type == 'plain':
                 slack_notify.post_slack_message_plain(channel, msg)
         elif command_grp == 'device':
-            #if cmd.split(' ', 1)[0] in commands[command_grp]:
             msg_type, msg = cmd_device.process(domo, cmd)
             if msg is not None:
                 if msg_type == 'attachment':
