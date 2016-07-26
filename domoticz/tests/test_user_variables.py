@@ -49,7 +49,7 @@ class TestUserVariables(unittest.TestCase):
         domo = domoticz.Domoticz('mydomoticz')
         m.get('http://mydomoticz:8080/json.htm?type=command&param=getuservariables', text='{{"status":"OK", "result":{data}}}'.format(data=json.dumps(self.all_vars)))
         actual_vars = domo.get_all_variables()
-        self.assertEqual(4, len(actual_vars))
+        self.assertEqual(5, len(actual_vars))
         self.assertListEqual(actual_vars, self.all_vars)
 
     def test_get_variable_by_idx_returns_one(self, m):
