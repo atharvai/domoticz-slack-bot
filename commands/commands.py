@@ -2,7 +2,8 @@ command_groups = [
     'status',
     'device',
     'sunriseset',
-    'uservar'
+    'uservar',
+    'system'
 ]
 
 commands = {
@@ -24,5 +25,8 @@ commands = {
         'set',
         'delete',
         'all'
+    ],
+    'system': [
+        'refresh'
     ]
 }

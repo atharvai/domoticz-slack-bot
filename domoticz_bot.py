@@ -1,7 +1,7 @@
 import ConfigParser
 import time
 
-from commands import cmd_uservar, cmd_device, cmd_status
+from commands import cmd_uservar, cmd_device, cmd_status, cmd_system
 from commands.commands import commands, command_groups
 from domoticz import domoticz
 from slack.slack_helper import generate_attachment_custom_fields
@@ -74,6 +74,12 @@ def handle_command(command, channel):
                     slack_notify.post_slack_message_plain(channel, msg)
             else:
                 post_help_msg(channel)
+        elif command_grp == 'system':
+            msg_type, msg = cmd_system.process(domo, cmd)
+            if msg_type == 'attachment':
+                slack_notify.post_slack_message(channel, msg)
+            elif msg_type == 'plain':
+                slack_notify.post_slack_message_plain(channel, msg)
         else:
             post_help_msg(channel)
     else:

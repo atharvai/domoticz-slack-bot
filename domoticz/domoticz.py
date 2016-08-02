@@ -18,7 +18,7 @@ class Domoticz:
                                                         endpoint=self.endpoint,
                                                         )
 
-    _device_list = []
+    device_names = []
     device_list_by_type = {}
     devices_last_update = ''
 
@@ -28,22 +28,20 @@ class Domoticz:
         # self._cache_device_list()
 
     @property
-    def device_list(self):
-        if self._device_list == [] or ((datetime.utcnow() - self.devices_last_update).seconds >= 300):
-            self._cache_device_list()
-        return self._device_list
-
-    @property
     def device_id_map(self):
-        return dict(map(lambda d: (d['Name'].lower(), d['idx']), self._device_list))
+        # update cache every 5 min
+        if self.device_names == [] or ((datetime.utcnow() - self.devices_last_update).seconds >= 300):
+            self._cache_device_list()
+        return self._device_id_map
 
     def _cache_device_list(self):
-        # TODO: make this a live API call every time or use job queue system
         req = requests.get(self.base_url, devices.get('all'))
-        self._device_list = req.json()['result']
+        _device_list = req.json()['result']
+        self._device_id_map = dict(map(lambda x: (x['Name'].lower(), x['idx']), _device_list))
+        self.device_names = map(lambda x: x['Name'], _device_list)
         self.devices_last_update = datetime.strptime(req.json()['ServerTime'], '%Y-%m-%d %H:%M:%S')
 
-        grouped = groupby(self._device_list, lambda d: d['Type'])
+        grouped = groupby(_device_list, lambda d: d['Type'])
         new_list = {}
         for k, v in grouped:
             if k in new_list:
@@ -53,21 +51,31 @@ class Domoticz:
         self.device_list_by_type = new_list
 
     def get_device_data(self, idx=None, name=None):
-        selected_dev = self.select_device(idx, name)
+        if idx is None and name is not None:
+            selected_dev = self.select_device(idx, name)
+        else:
+            selected_dev = [idx]
         if selected_dev is None or len(selected_dev) == 0:
             return None
-        return selected_dev
+        params = devices['byIdx'].copy()
+        params['rid'] = selected_dev[0]
+        req = requests.get(self.base_url, params)
+        if req.status_code == 200:
+            result = req.json()['result']
+            return result
+        return None
 
     def select_device(self, idx=None, name=None, count=1):
         if idx is None and name is None:
             raise Exception('Please provide either idx or name. Providing both will use idx value.')
         selected_dev = []
         if idx is not None:
-            result = filter(lambda d: d['idx'] == str(idx), self.device_list)
-            if len(result) >= 1:
-                selected_dev = result[:count]
+            result = [str(idx)] if str(idx) in self.device_id_map.values() else []
+            if result is not None:
+                selected_dev = result
         if name is not None:
-            result = filter(lambda d: d['Name'] == str(name), self.device_list)
+            # result = filter(lambda d: d['Name'] == str(name), self.device_id_map)
+            result = self.device_id_map[name.lower()] if name.lower() in self.device_id_map.keys() else []
             if len(result) >= 1:
                 selected_dev = result[:count]
         return selected_dev
@@ -202,5 +210,22 @@ class Domoticz:
         params = devices['toggleLightSwitch'].copy()
         params['idx'] = str(var_idx)
         params['switchcmd'] = swt_cmd
+        req = requests.get(self.base_url, params)
+        return req.json()['status']
+
+    def dim_light_switch(self, name=None, idx=None, level='100'):
+        var_idx = None
+        if idx is not None:
+            var_idx = idx
+        if name is not None and var_idx is None:
+            try:
+                var_idx = self.device_id_map[name]
+            except KeyError as kex:
+                print('Device {} not found'.format(name))
+                var_idx = None
+                return None
+        params = devices['dimLightSwitch'].copy()
+        params['idx'] = str(var_idx)
+        params['level'] = str(level)
         req = requests.get(self.base_url, params)
         return req.json()['status']

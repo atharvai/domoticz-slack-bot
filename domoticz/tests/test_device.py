@@ -9,6 +9,9 @@ class TestDevice(unittest.TestCase):
                                {'Type': 'Light', 'idx': '2', 'Name': 'Device2'},
                                ],
                      'ServerTime':'2016-07-13 01:01:01'}
+    device_data_1 = {'result':[{'Type': 'Light', 'idx': '1', 'Name': 'Device1'},
+                               ],
+                     'ServerTime':'2016-07-13 01:01:01'}
     sunrise_data = {'Sunrise': '04:00', 'Sunset': '20:00', 'ServerTime':'2016-07-13 01:01:01',
                     'title': 'getSunRiseSet',
                     'status': 'OK'}
@@ -17,11 +20,11 @@ class TestDevice(unittest.TestCase):
         domo = domoticz.Domoticz('mydomoticz')
         self.assertEqual(domo.base_url, 'http://mydomoticz:8080/json.htm?', 'Generated base URL is incorrect')
 
-    def test_cache_device_list(self, m):
-        m.get('http://mydomoticz:8080/json.htm?type-devices&filter=all&used=true&order=Name', text='{"result":[{"Type":"Light"}],"ServerTime":"2016-07-13 01:01:01"}')
-        domo = domoticz.Domoticz('mydomoticz')
-        domo._cache_device_list()
-        self.assertEqual(len(domo.device_list), 1, 'device list is not as expected with 1 device')
+    # def test_cache_device_list(self, m):
+    #     m.get('http://mydomoticz:8080/json.htm?type-devices&filter=all&used=true&order=Name', text='{"result":[{"Type":"Light"}],"ServerTime":"2016-07-13 01:01:01"}')
+    #     domo = domoticz.Domoticz('mydomoticz')
+    #     domo._cache_device_list()
+    #     self.assertEqual(len(domo.device_list), 1, 'device list is not as expected with 1 device')
 
     def test_device_id_map_returns_dict(self, m):
         m.get('http://mydomoticz:8080/json.htm?type-devices&filter=all&used=true&order=Name', text=json.dumps(self.device_data))
@@ -31,17 +34,18 @@ class TestDevice(unittest.TestCase):
         m.get('http://mydomoticz:8080/json.htm?type-devices&filter=all&used=true&order=Name', text=json.dumps(self.device_data))
         domo = domoticz.Domoticz('mydomoticz')
         device = domo.select_device(idx=1)
-        self.assertDictEqual(device[0],self.device_data['result'][0], 'Device1 not returned')
+        self.assertEqual(device[0],self.device_data['result'][0]['idx'], 'Device1 not returned')
 
     def test_select_device_name_returns_device2(self, m):
         m.get('http://mydomoticz:8080/json.htm?type-devices&filter=all&used=true&order=Name', text=json.dumps(self.device_data))
         domo = domoticz.Domoticz('mydomoticz')
         device = domo.select_device(name='Device2')
         self.assertEqual(len(device), 1)
-        self.assertDictEqual(device[0], self.device_data['result'][1])
+        self.assertEqual(device[0], self.device_data['result'][1]['idx'])
 
     def test_get_device_data_returns_device1(self, m):
         m.get('http://mydomoticz:8080/json.htm?type-devices&filter=all&used=true&order=Name', text=json.dumps(self.device_data))
+        m.get('http://mydomoticz:8080/json.htm?rid=1&type=devices', text=json.dumps(self.device_data_1))
         domo = domoticz.Domoticz('mydomoticz')
         dev = domo.get_device_data(idx=1)
         self.assertEqual(len(dev), 1)

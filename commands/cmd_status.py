@@ -2,6 +2,7 @@ from datetime import datetime
 
 from commands import commands
 from slack.slack_helper import generate_table_attachment, generate_attachment, datetime_to_ts
+import shlex
 
 NOT_FOUND_MSG = 'Device `{}` not found'
 
@@ -11,11 +12,11 @@ def get_domoticz_status(data):
 
 
 def get_device_status(domo, name):
-    devices = filter(lambda k: name.lower() in k['Name'].lower(), domo.device_list)
+    devices = filter(lambda k: name.lower() in k.lower(), domo.device_names)
     if len(devices) == 0:
         return None
 
-    idx = devices[0]['idx']
+    idx = domo.device_id_map[devices[0].lower()]
     data = domo.get_device_data(idx=idx)
     data = data[0]
     ts = datetime_to_ts(datetime.strptime(data['LastUpdate'], '%Y-%m-%d %H:%M:%S'))
@@ -24,6 +25,8 @@ def get_device_status(domo, name):
 
 
 def process(domo, cmd, command_grp):
+    tokens = shlex.split(cmd)
+    cmd = tokens[0]
     result = None
     if cmd in commands[command_grp]:
         data = domo.get_device_status_many(cmd)

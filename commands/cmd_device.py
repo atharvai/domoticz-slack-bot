@@ -15,7 +15,7 @@ def process(domo, command_str):
     msg_type = 'plain'
     attachment = ''
     if cmd == 'list':
-        data = sorted(map(lambda d: d['Name'], domo.device_list))
+        data = sorted(domo.device_names)
         attachment = generate_attachment('Device List', 'neutral', '\n'.join(data),
                                          datetime_to_ts(datetime.utcnow()))
         msg_type = 'attachment'
@@ -37,6 +37,11 @@ def process(domo, command_str):
         dev_name, level = tokens[1], tokens[2]
         msg_type = 'plain'
         attachment = 'I don''t yet know how to dim a light.'
+        result = domo.dim_light_switch(name=dev_name, level=level)
+        if result is not None:
+            attachment = result
+        else:
+            attachment = NOT_FOUND_MSG.format(dev_name)
     elif cmd == 'status':
         dev_name = tokens[1]
         result = cmd_status.process(domo, dev_name, 'status')

@@ -7,6 +7,7 @@ devices = {
     'favourite': {'type':'devices','filter':'all','used':'true','order':'Name','favorite':1},
     'byIdx': {'type':'devices','rid':-1},
     'toggleLightSwitch': {'type':'command','param':'switchlight','switchcmd':'Toggle','idx':-1},
+    'dimLightSwitch': {'type':'command','param':'switchlight','switchcmd':'Set Level','idx':-1, 'level':-1},
 }
 
 command = {
