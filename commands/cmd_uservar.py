@@ -24,7 +24,7 @@ def process(domo, cmd, req_var):
             data = domo.get_user_variable(name=req_var[1])
         if data is not None:
             attachment = generate_attachment('User Variable: {id}'.format(id=req_var[1]), 'neutral', data,
-                                         datetime_to_ts(datetime.utcnow()))
+                                             datetime_to_ts(datetime.utcnow()))
         else:
             msg_type = 'plain'
             attachment = 'Variable `{}` not found'.format(req_var[1])

@@ -1,11 +1,3 @@
-command_groups = [
-    'status',
-    'device',
-    'sunriseset',
-    'uservar',
-    'system'
-]
-
 commands = {
     'status': [
         'all',
@@ -30,3 +22,5 @@ commands = {
         'refresh'
     ]
 }
+
+command_groups = commands.keys()

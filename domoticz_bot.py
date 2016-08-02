@@ -131,10 +131,11 @@ def slack_connect():
     else:
         print('Connection failed. Invalid Slack token or bot ID?')
 
+
 if __name__ == '__main__':
     retry_limit = 5
     retry_attempt = 0
-    while(retry_attempt < retry_limit):
+    while (retry_attempt < retry_limit):
         try:
             slack_connect()
         except Exception as ex:

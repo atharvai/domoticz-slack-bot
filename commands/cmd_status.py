@@ -1,10 +1,11 @@
+import shlex
 from datetime import datetime
 
 from commands import commands
 from slack.slack_helper import generate_table_attachment, generate_attachment, datetime_to_ts
-import shlex
 
 NOT_FOUND_MSG = 'Device `{}` not found'
+
 
 def get_domoticz_status(data):
     attachments = generate_table_attachment('Device Status', 'neutral', data, 'Device Status Update')

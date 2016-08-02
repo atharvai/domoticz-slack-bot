@@ -1,9 +1,11 @@
-from datetime import datetime
 import shlex
-from slack.slack_helper import datetime_to_ts, generate_attachment
+from datetime import datetime
+
 import cmd_status
+from slack.slack_helper import datetime_to_ts, generate_attachment
 
 NOT_FOUND_MSG = 'Device `{}` not found'
+
 
 def process(domo, command_str):
     tokens = shlex.split(command_str)

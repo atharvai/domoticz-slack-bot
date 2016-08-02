@@ -2,6 +2,7 @@ import shlex
 
 NOT_FOUND_MSG = 'Device `{}` not found'
 
+
 def process(domo, command_str):
     tokens = shlex.split(command_str)
     if len(tokens) > 0:
