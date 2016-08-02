@@ -26,8 +26,9 @@ def get_device_status(domo, name):
 
 
 def process(domo, cmd, command_grp):
-    tokens = shlex.split(cmd)
-    cmd = tokens[0]
+    if cmd.startswith("'"):
+        tokens = shlex.split(cmd)
+        cmd = tokens[0]
     result = None
     if cmd in commands[command_grp]:
         data = domo.get_device_status_many(cmd)
