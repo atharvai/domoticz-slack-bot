@@ -17,7 +17,7 @@ config.read('bot.config')
 BOT_ID = config.get('slack', 'bot_id')
 
 # constants
-AT_BOT = "<@" + BOT_ID + ">:"
+AT_BOT = "<@" + BOT_ID + ">"
 
 # instantiate Slack clients
 slack_client = SlackClient(config.get('slack', 'token'))
