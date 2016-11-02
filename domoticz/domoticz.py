@@ -74,7 +74,6 @@ class Domoticz:
             if result is not None:
                 selected_dev = result
         if name is not None:
-            # result = filter(lambda d: d['Name'] == str(name), self.device_id_map)
             result = self.device_id_map[name.lower()] if name.lower() in self.device_id_map.keys() else []
             if len(result) >= 1:
                 selected_dev = result[:count]
@@ -229,3 +228,16 @@ class Domoticz:
         params['level'] = str(level)
         req = requests.get(self.base_url, params)
         return req.json()['status']
+
+    def get_log(self, name=None, idx=None):
+        var_idx = None
+        if idx is not None:
+            var_idx = idx
+        if name is not None and var_idx is None:
+            try:
+                devices = filter(lambda k: name.lower() in k.lower(), self.device_names)
+                var_idx = self.device_id_map[devices[0].lower()]
+            except KeyError as kex:
+                print('Device {} not found'.format(name))
+                var_idx = None
+                return None

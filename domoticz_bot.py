@@ -80,6 +80,8 @@ def handle_command(command, channel):
                 slack_notify.post_slack_message(channel, msg)
             elif msg_type == 'plain':
                 slack_notify.post_slack_message_plain(channel, msg)
+        elif command_grp == 'log':
+            domo.get_log(cmd)
         else:
             post_help_msg(channel)
     else:
@@ -135,11 +137,11 @@ def slack_connect():
 if __name__ == '__main__':
     retry_limit = 5
     retry_attempt = 0
-    while (retry_attempt < retry_limit):
+    while retry_attempt < retry_limit:
         try:
             slack_connect()
         except Exception as ex:
             print('Connection terminated. retrying...')
             print(ex.message)
-            time.sleep(retry_attempt * 5)
+            time.sleep(retry_attempt * 30)
             retry_attempt += 1

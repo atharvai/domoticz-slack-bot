@@ -20,6 +20,10 @@ commands = {
     ],
     'system': [
         'refresh'
+    ],
+    'log': [
+        'lightswitch',
+        'temp'
     ]
 }
 

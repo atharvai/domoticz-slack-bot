@@ -30,3 +30,8 @@ uservariables = {
     'delete': {'type': 'command', 'param': 'deleteuservariable', 'idx': -1},
     'byIdx': {'type': 'command', 'param': 'getuservariable', 'idx': -1},
 }
+
+log = {
+    'lightswitch': {'type': 'lightlog', 'idx': -1},
+    'temp': {'type': 'graph', 'sensor': 'tmep', 'range': 'month', 'idx': -1},
+}
